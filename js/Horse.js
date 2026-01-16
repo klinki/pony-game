@@ -44,7 +44,7 @@ export class Horse {
         this.x += this.currentSpeed * dt;
 
         // Stamina logic
-        if (this.currentSpeed > 0 && !this.exhausted) {
+        if (this.currentSpeed > 25 && !this.exhausted) {
              // Drain is proportional to speed.
              // Nonlinear drain: punish high speed more.
              const speedFactor = this.currentSpeed / 500; // 0 to ~1
@@ -88,7 +88,7 @@ export class Horse {
             if (this.currentSpeed < minSpeed) this.currentSpeed = minSpeed;
 
             // Passive regeneration
-            if (this.currentSpeed < 10 && this.currentStamina < this.maxStamina) {
+            if (this.currentSpeed < 25 && this.currentStamina < this.maxStamina) {
                 this.currentStamina += 10 * dt;
             }
         }
