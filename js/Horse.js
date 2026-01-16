@@ -1,9 +1,10 @@
 export class Horse {
-    constructor(name, lane, stats, isPlayer = false) {
+    constructor(name, lane, stats, isPlayer = false, strategy = 'STEADY') {
         this.name = name;
         this.lane = lane; // 0-9
         this.stats = stats;
         this.isPlayer = isPlayer;
+        this.strategy = strategy;
 
         // Physics constants derived from stats (0-100)
         // Base speed 100, max bonus 200. Max Speed range: 100-300 px/s?
@@ -24,17 +25,20 @@ export class Horse {
         this.exhausted = false;
         this.finished = false;
 
+        // Strategy specific state
+        this.strategyState = 'run'; // For interval strategy (run/rest)
+
         // Visual
         this.color = isPlayer ? '#e63946' : this.getRandomColor(); // Player is Red
         this.width = 40;
         this.height = 20;
     }
 
-    update(dt) {
+    update(dt, trackLength = 10000) {
         if (this.finished) return;
 
         if (!this.isPlayer) {
-            this.updateAI(dt);
+            this.updateAI(dt, trackLength);
         }
 
         // Update position
@@ -56,6 +60,7 @@ export class Horse {
         if (this.currentStamina <= 0) {
             this.currentStamina = 0;
             this.exhausted = true;
+            this.strategyState = 'rest'; // Force rest logic if strategy uses it
         }
 
         // Exhaustion Recovery & Friction
@@ -107,28 +112,83 @@ export class Horse {
         return colors[Math.floor(Math.random() * colors.length)];
     }
 
-    updateAI(dt) {
-        // Simple AI: Try to maintain 90% max speed, but don't exhaust completely
-        const speedThreshold = this.maxSpeed * 0.9;
-        const staminaThreshold = this.maxStamina * 0.2;
-
+    updateAI(dt, trackLength) {
         if (this.exhausted) return;
 
-        // If stamina is low, maybe chill a bit?
-        // But if we chill, friction slows us down.
-        // Let's just burst: Accelerate if speed < threshold and stamina > low
+        switch (this.strategy) {
+            case 'BURNOUT':
+                this.strategyBurnout();
+                break;
+            case 'INTERVAL':
+                this.strategyInterval();
+                break;
+            case 'SAVER':
+                this.strategySaver(trackLength);
+                break;
+            case 'STEADY':
+            default:
+                this.strategySteady();
+                break;
+        }
+    }
 
-        if (this.currentSpeed < speedThreshold && this.currentStamina > staminaThreshold) {
-            // Random chance to accelerate to simulate tapping
-            if (Math.random() < 0.1) {
-                this.accelerate();
+    // Run at ~70% speed, try not to exhaust
+    strategySteady() {
+        const targetSpeed = this.maxSpeed * 0.75;
+        const staminaSafeguard = this.maxStamina * 0.15;
+
+        // If below target speed and have stamina, accelerate
+        if (this.currentSpeed < targetSpeed && this.currentStamina > staminaSafeguard) {
+             if (Math.random() < 0.2) { // Randomness to simulate tapping
+                 this.accelerate();
+             }
+        }
+    }
+
+    // Run max speed always. Will exhaust.
+    strategyBurnout() {
+        if (this.currentStamina > 0) {
+            if (Math.random() < 0.3) {
+                 this.accelerate();
             }
         }
+    }
 
-        // If we have lots of stamina, go faster
-        if (this.currentStamina > this.maxStamina * 0.8) {
-             if (Math.random() < 0.2) {
-                this.accelerate();
+    // Burst speed then rest
+    strategyInterval() {
+        if (this.strategyState === 'run') {
+            // Accelerate hard
+            if (this.currentSpeed < this.maxSpeed) {
+                 if (Math.random() < 0.3) this.accelerate();
+            }
+
+            // Switch to rest if stamina low
+            if (this.currentStamina < this.maxStamina * 0.1) {
+                this.strategyState = 'rest';
+            }
+        } else {
+            // Rest (do nothing, friction slows us down)
+
+            // Switch back to run if stamina recovered
+            if (this.currentStamina > this.maxStamina * 0.7) {
+                this.strategyState = 'run';
+            }
+        }
+    }
+
+    // Go slow until end, then sprint
+    strategySaver(trackLength) {
+        const remainingDistance = trackLength - this.x;
+        const sprintDistance = trackLength * 0.3; // Sprint last 30%
+
+        if (remainingDistance < sprintDistance) {
+            // Sprint mode
+             if (Math.random() < 0.3) this.accelerate();
+        } else {
+            // Save mode: Keep around 50% speed
+            const targetSpeed = this.maxSpeed * 0.5;
+            if (this.currentSpeed < targetSpeed) {
+                if (Math.random() < 0.1) this.accelerate();
             }
         }
     }

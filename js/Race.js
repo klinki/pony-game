@@ -16,6 +16,8 @@ export class Race {
     }
 
     initHorses() {
+        const strategies = ['STEADY', 'BURNOUT', 'INTERVAL', 'SAVER'];
+
         // Create 10 horses
         for (let i = 0; i < 10; i++) {
             const isPlayer = (i === 4); // Player in middle lane (index 4)
@@ -23,7 +25,11 @@ export class Race {
             const stats = this.generateStats(tier);
             const name = isPlayer ? "You" : `CPU ${i+1}`;
 
-            const horse = new Horse(name, i, stats, isPlayer);
+            // Assign strategy to CPU
+            // We rotate through strategies to ensure variety
+            const strategy = isPlayer ? null : strategies[i % strategies.length];
+
+            const horse = new Horse(name, i, stats, isPlayer, strategy);
             this.horses.push(horse);
             if (isPlayer) this.playerHorse = horse;
         }
@@ -66,7 +72,7 @@ export class Race {
 
         let allFinished = true;
         this.horses.forEach(horse => {
-            horse.update(dt);
+            horse.update(dt, this.trackLength);
             if (horse.x >= this.trackLength) {
                 horse.finished = true;
                 horse.x = this.trackLength; // Clamp
