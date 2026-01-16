@@ -138,6 +138,9 @@ export class Race {
 
         this.ctx.restore();
 
+        // Draw Minimap (Fixed on screen)
+        this.drawMinimap();
+
         // Draw Overlay (Game Over / Start)
         if (this.state === 'waiting') {
              this.ctx.fillStyle = 'rgba(0,0,0,0.5)';
@@ -201,6 +204,45 @@ export class Race {
         }
     }
 
+    drawMinimap() {
+        const mapHeight = 50;
+        const mapWidth = this.canvas.width - 40;
+        const mapX = 20;
+        const mapY = this.canvas.height - mapHeight - 10;
+
+        // Background
+        this.ctx.fillStyle = 'rgba(0,0,0,0.5)';
+        this.ctx.fillRect(mapX, mapY, mapWidth, mapHeight);
+
+        // Line
+        this.ctx.strokeStyle = 'white';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+        this.ctx.moveTo(mapX + 10, mapY + mapHeight/2);
+        this.ctx.lineTo(mapX + mapWidth - 10, mapY + mapHeight/2);
+        this.ctx.stroke();
+
+        // Finish Line mark
+        this.ctx.fillStyle = 'white';
+        this.ctx.fillRect(mapX + mapWidth - 15, mapY + 10, 5, mapHeight - 20);
+
+        // Horses
+        const availableWidth = mapWidth - 20;
+
+        this.horses.forEach(horse => {
+            const pct = horse.x / this.trackLength;
+            const x = mapX + 10 + (pct * availableWidth);
+            const y = mapY + mapHeight/2;
+
+            this.ctx.fillStyle = horse.isPlayer ? 'yellow' : horse.color;
+            const size = horse.isPlayer ? 8 : 5;
+
+            this.ctx.beginPath();
+            this.ctx.arc(x, y, size, 0, Math.PI * 2);
+            this.ctx.fill();
+        });
+    }
+
     handleInput() {
         if (this.state === 'waiting') {
             this.state = 'running';
@@ -208,5 +250,13 @@ export class Race {
         if (this.state === 'running' && this.playerHorse) {
             this.playerHorse.accelerate();
         }
+    }
+
+    getPlayerRank() {
+        if (!this.playerHorse) return null;
+
+        // Clone and sort horses by X position (descending)
+        const sortedHorses = [...this.horses].sort((a, b) => b.x - a.x);
+        return sortedHorses.indexOf(this.playerHorse) + 1;
     }
 }

@@ -11,7 +11,8 @@ export class Horse {
         this.maxSpeed = 200 + (this.stats.speed * 3);
 
         // Acceleration: 50 + strength. Range: 50-150.
-        this.acceleration = 20 + (this.stats.strength * 0.8);
+        // Buffed to make game feel more responsive
+        this.acceleration = 30 + (this.stats.strength * 1.0);
 
         // Stamina: Base 100 + bonus. Range: 100-300.
         this.maxStamina = 100 + (this.stats.stamina * 2);
@@ -71,7 +72,8 @@ export class Horse {
         } else {
             // Normal friction (air resistance)
             // If the player stops pressing space, the horse slows down.
-            this.currentSpeed -= 40 * dt;
+            // Reduced friction slightly to make speed stick a bit more
+            this.currentSpeed -= 30 * dt;
             if (this.currentSpeed < 0) this.currentSpeed = 0;
 
             // Passive regeneration if moving very slowly?

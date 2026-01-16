@@ -25,6 +25,12 @@ function gameLoop(timestamp) {
         const staminaPct = (curStamina / maxStamina) * 100;
         document.getElementById('stamina-bar').style.width = `${staminaPct}%`;
 
+        // Update Rank
+        const rank = race.getPlayerRank();
+        if (rank) {
+            document.getElementById('rank-value').textContent = rank;
+        }
+
         // Change color if exhausted
         if (race.playerHorse.exhausted) {
              document.getElementById('stamina-bar').style.backgroundColor = '#d90429'; // Red
