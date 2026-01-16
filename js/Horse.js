@@ -7,12 +7,10 @@ export class Horse {
         this.strategy = strategy;
 
         // Physics constants derived from stats (0-100)
-        // Base speed 100, max bonus 200. Max Speed range: 100-300 px/s?
-        // Let's assume World Units.
-        this.maxSpeed = 200 + (this.stats.speed * 3);
+        // Buffed Base speed to help slow horses (200 -> 250)
+        this.maxSpeed = 250 + (this.stats.speed * 3);
 
         // Acceleration: 50 + strength. Range: 50-150.
-        // Buffed to make game feel more responsive
         this.acceleration = 30 + (this.stats.strength * 1.0);
 
         // Stamina: Base 100 + bonus. Range: 100-300.
@@ -24,6 +22,7 @@ export class Horse {
         this.currentStamina = this.maxStamina;
         this.exhausted = false;
         this.finished = false;
+        this.recoveryTimer = 0; // Cooldown timer for exhaustion
 
         // Strategy specific state
         this.strategyState = 'run'; // For interval strategy (run/rest)
@@ -47,20 +46,20 @@ export class Horse {
         // Stamina logic
         if (this.currentSpeed > 0 && !this.exhausted) {
              // Drain is proportional to speed.
-             // At Max Speed (300), drain should be fast. Say 5 seconds to empty?
-             // 300 / 5 = 60 drain/sec.
-             // Base drain 5 + speed factor.
+             // Nonlinear drain: punish high speed more.
              const speedFactor = this.currentSpeed / 500; // 0 to ~1
-             const drainRate = 5 + (speedFactor * 100);
+             // drainRate = 5 + (speedFactor^2 * 150)
+             const drainRate = 5 + (Math.pow(speedFactor, 2) * 150);
 
              this.currentStamina -= drainRate * dt;
         }
 
         // Check exhaustion
-        if (this.currentStamina <= 0) {
+        if (this.currentStamina <= 0 && !this.exhausted) {
             this.currentStamina = 0;
             this.exhausted = true;
-            this.strategyState = 'rest'; // Force rest logic if strategy uses it
+            this.recoveryTimer = 2.0; // 2 seconds penalty
+            this.strategyState = 'rest';
         }
 
         // Exhaustion Recovery & Friction
@@ -69,20 +68,22 @@ export class Horse {
             this.currentSpeed -= 200 * dt;
             if (this.currentSpeed < 0) this.currentSpeed = 0;
 
-            // Regenerate
-            this.currentStamina += 30 * dt;
-            // Recover as soon as we have some stamina (e.g. > 5 units)
-            if (this.currentStamina >= 5) {
-                this.exhausted = false;
+            if (this.recoveryTimer > 0) {
+                this.recoveryTimer -= dt;
+            } else {
+                // Regenerate once timer is up
+                this.currentStamina += 30 * dt;
+                // Recover as soon as we have some stamina
+                if (this.currentStamina >= 5) {
+                    this.exhausted = false;
+                }
             }
         } else {
-            // Normal friction (air resistance)
-            // If the player stops pressing space, the horse slows down.
-            // Reduced friction slightly to make speed stick a bit more
+            // Normal friction
             this.currentSpeed -= 30 * dt;
             if (this.currentSpeed < 0) this.currentSpeed = 0;
 
-            // Passive regeneration if moving very slowly?
+            // Passive regeneration
             if (this.currentSpeed < 10 && this.currentStamina < this.maxStamina) {
                 this.currentStamina += 10 * dt;
             }
@@ -102,12 +103,10 @@ export class Horse {
     accelerate() {
         if (this.exhausted || this.finished) return;
         this.currentSpeed += this.acceleration;
-        // Speed is capped in update(), but we can cap here too for immediate feedback logic
         if (this.currentSpeed > this.maxSpeed) this.currentSpeed = this.maxSpeed;
     }
 
     getRandomColor() {
-        // Random horse colors (browns, grays, whites, blacks)
         const colors = ['#8B4513', '#A0522D', '#D2691E', '#CD853F', '#F4A460', '#DEB887', '#D2B48C', '#BC8F8F', '#F5DEB3', '#A9A9A9', '#808080', '#696969', '#2F4F4F', '#000000', '#FFFAFA'];
         return colors[Math.floor(Math.random() * colors.length)];
     }
@@ -132,14 +131,14 @@ export class Horse {
         }
     }
 
-    // Run at ~70% speed, try not to exhaust
+    // Run at ~80% speed (upped from 75%), try not to exhaust
     strategySteady() {
-        const targetSpeed = this.maxSpeed * 0.75;
-        const staminaSafeguard = this.maxStamina * 0.15;
+        const targetSpeed = this.maxSpeed * 0.8;
+        const staminaSafeguard = this.maxStamina * 0.2; // Be careful
 
         // If below target speed and have stamina, accelerate
         if (this.currentSpeed < targetSpeed && this.currentStamina > staminaSafeguard) {
-             if (Math.random() < 0.2) { // Randomness to simulate tapping
+             if (Math.random() < 0.2) {
                  this.accelerate();
              }
         }
@@ -154,39 +153,33 @@ export class Horse {
         }
     }
 
-    // Burst speed then rest
     strategyInterval() {
         if (this.strategyState === 'run') {
-            // Accelerate hard
             if (this.currentSpeed < this.maxSpeed) {
                  if (Math.random() < 0.3) this.accelerate();
             }
-
-            // Switch to rest if stamina low
-            if (this.currentStamina < this.maxStamina * 0.1) {
+            // Switch to rest if stamina gets dangerously low (higher threshold to avoid exhaustion penalty)
+            if (this.currentStamina < this.maxStamina * 0.15) {
                 this.strategyState = 'rest';
             }
         } else {
-            // Rest (do nothing, friction slows us down)
-
-            // Switch back to run if stamina recovered
+            // Rest
             if (this.currentStamina > this.maxStamina * 0.7) {
                 this.strategyState = 'run';
             }
         }
     }
 
-    // Go slow until end, then sprint
     strategySaver(trackLength) {
         const remainingDistance = trackLength - this.x;
-        const sprintDistance = trackLength * 0.3; // Sprint last 30%
+        const sprintDistance = trackLength * 0.3;
 
         if (remainingDistance < sprintDistance) {
-            // Sprint mode
-             if (Math.random() < 0.3) this.accelerate();
+            // Sprint mode, careful not to hit 0 if possible, but go fast
+             if (this.currentStamina > 5 && Math.random() < 0.3) this.accelerate();
         } else {
-            // Save mode: Keep around 50% speed
-            const targetSpeed = this.maxSpeed * 0.5;
+            // Save mode: Keep around 60% speed (upped from 50%)
+            const targetSpeed = this.maxSpeed * 0.6;
             if (this.currentSpeed < targetSpeed) {
                 if (Math.random() < 0.1) this.accelerate();
             }

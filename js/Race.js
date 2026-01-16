@@ -4,7 +4,7 @@ export class Race {
     constructor(canvas, ctx) {
         this.canvas = canvas;
         this.ctx = ctx;
-        this.trackLength = 10000;
+        this.trackLength = 6000; // Shortened from 10000 for faster races
         this.cameraX = 0;
         this.lastTime = 0;
         this.state = 'waiting';
