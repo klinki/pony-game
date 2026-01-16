@@ -64,9 +64,10 @@ export class Horse {
 
         // Exhaustion Recovery & Friction
         if (this.exhausted) {
-            // Strong friction
+            // Strong friction, but keep minimal speed
             this.currentSpeed -= 200 * dt;
-            if (this.currentSpeed < 0) this.currentSpeed = 0;
+            const minSpeed = 20;
+            if (this.currentSpeed < minSpeed) this.currentSpeed = minSpeed;
 
             if (this.recoveryTimer > 0) {
                 this.recoveryTimer -= dt;
