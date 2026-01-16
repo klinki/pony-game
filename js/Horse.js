@@ -41,7 +41,7 @@ export class Horse {
         this.x += this.currentSpeed * dt;
 
         // Stamina logic
-        if (this.currentSpeed > 0) {
+        if (this.currentSpeed > 0 && !this.exhausted) {
              // Drain is proportional to speed.
              // At Max Speed (300), drain should be fast. Say 5 seconds to empty?
              // 300 / 5 = 60 drain/sec.
@@ -66,7 +66,8 @@ export class Horse {
 
             // Regenerate
             this.currentStamina += 30 * dt;
-            if (this.currentStamina >= this.maxStamina * 0.5) { // Recover at 50%
+            // Recover as soon as we have some stamina (e.g. > 5 units)
+            if (this.currentStamina >= 5) {
                 this.exhausted = false;
             }
         } else {
