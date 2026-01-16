@@ -18,7 +18,11 @@ function gameLoop(timestamp) {
         const speedVal = Math.floor(race.playerHorse.currentSpeed);
         document.getElementById('speed-value').textContent = speedVal;
 
-        const staminaPct = (race.playerHorse.currentStamina / race.playerHorse.maxStamina) * 100;
+        const curStamina = Math.floor(race.playerHorse.currentStamina);
+        const maxStamina = Math.floor(race.playerHorse.maxStamina);
+        document.getElementById('stamina-value').textContent = `${curStamina} / ${maxStamina}`;
+
+        const staminaPct = (curStamina / maxStamina) * 100;
         document.getElementById('stamina-bar').style.width = `${staminaPct}%`;
 
         // Change color if exhausted
