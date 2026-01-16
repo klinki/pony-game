@@ -82,7 +82,10 @@ export class Horse {
         } else {
             // Normal friction
             this.currentSpeed -= 30 * dt;
-            if (this.currentSpeed < 0) this.currentSpeed = 0;
+
+            // Ensure we don't stop completely if we've started running (simple heuristic: x > 0)
+            const minSpeed = (this.x > 0) ? 20 : 0;
+            if (this.currentSpeed < minSpeed) this.currentSpeed = minSpeed;
 
             // Passive regeneration
             if (this.currentSpeed < 10 && this.currentStamina < this.maxStamina) {
