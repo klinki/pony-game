@@ -1,0 +1,64 @@
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f0f0f0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+#game-container {
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    text-align: center;
+    width: 90%;
+    max-width: 1000px;
+}
+
+canvas {
+    border: 1px solid #ccc;
+    background-color: #55a630; /* Grass color */
+    width: 100%;
+    display: block;
+    margin-top: 20px;
+}
+
+#ui-layer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #eee;
+    border-radius: 4px;
+}
+
+#stamina-bar-container {
+    display: flex;
+    align-items: center;
+    width: 200px;
+}
+
+.bar-bg {
+    flex-grow: 1;
+    height: 10px;
+    background-color: #ccc;
+    margin-left: 10px;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+#stamina-bar {
+    height: 100%;
+    width: 100%;
+    background-color: #ffca3a;
+    transition: width 0.1s linear;
+}
+
+#message-area {
+    font-weight: bold;
+    color: #333;
+}
