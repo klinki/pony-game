@@ -70,9 +70,15 @@ export class Race {
 
         if (this.state !== 'running' && this.state !== 'finished') return;
 
+        // Speed up if player finished
+        let timeScale = 1;
+        if (this.playerHorse && this.playerHorse.finished) {
+            timeScale = 2;
+        }
+
         let allFinished = true;
         this.horses.forEach(horse => {
-            horse.update(dt, this.trackLength);
+            horse.update(dt * timeScale, this.trackLength);
             if (horse.x >= this.trackLength) {
                 horse.finished = true;
                 horse.x = this.trackLength; // Clamp

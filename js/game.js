@@ -8,6 +8,7 @@ canvas.width = 800;
 canvas.height = 600;
 
 const race = new Race(canvas, ctx);
+window.race = race; // Expose for debugging
 
 function gameLoop(timestamp) {
     race.update(timestamp);
